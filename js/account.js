@@ -87,8 +87,8 @@ function vipPage(){const t=tier();X.M.innerHTML=`<h2>👑 小团会员</h2><p st
  <div class="vplan pro"><div class="vpn">💎 小团 Pro</div><div class="vpp">¥38<small>/月</small></div><div class="vpd">¥268/年 · 含全部会员权益</div></div></div>
  <div class="vtw"><table class="vt"><thead><tr><th>权益</th><th>免费</th><th class="hc">小团会员</th><th>小团 Pro</th></tr></thead><tbody>${ROWS.map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map((v,i)=>`<td class="${i==1?"hc":""} ${v=="—"?"no":v=="✓"||v=="无限"||/解锁|全部/.test(v)?"yes":""}">${v=="即将上线"?'<span class="soon">即将上线</span>':v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
  <div class="panel vrd"><h3>🎁 兑换会员</h3>${user?"":`<p class="hint" style="text-align:left">兑换前请先 <a href="javascript:void 0" data-login style="color:var(--acc);font-weight:700">登录 / 注册</a></p>`}${redeemForm("rdm1")}
- <h3>🛒 如何购买</h3><p>目前会员通过兑换码开通：请联系客服获取兑换码，拿到后在上方输入即可立即生效。同等级会员时长自动叠加；开通 Pro 后立即享有全部会员权益。</p>
- <p class="vnote">✅ 7 天无理由退款：开通后 7 天内如不满意，可联系客服申请全额退款。</p></div>`;bindLogin(X.M);bindRedeem(X.M)}
+ <h3>🛒 如何购买</h3><p>目前在<strong>闲鱼</strong>搜索「小团英语」即可购买会员。拍下后卖家会发来兑换码，回到本页上方输入即可立即开通。同等级会员时长自动叠加；开通 Pro 后立即享有全部会员权益。</p>
+ <p class="vnote">✅ 7 天无理由退款：开通后 7 天内如不满意，可在闲鱼申请退款。</p></div>`;bindLogin(X.M);bindRedeem(X.M)}
 // ---- 学习周报（会员）
 function report(){if(!paid())return lockPage("学习周报为会员功能","开通小团会员，每周自动汇总学习天数、练习量和正确率。","#/");const dl=S.get("dlog",{}),days=new Set(S.get("days",[])),acc=S.get("acc",{ok:0,bad:0});const W=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return {k:d.toDateString(),l:"日一二三四五六"[d.getDay()],n:dl[d.toDateString()]||0,on:days.has(d.toDateString())}});
  const tot=W.reduce((a,x)=>a+x.n,0),mx=Math.max(1,...W.map(x=>x.n)),ad=W.filter(x=>x.on).length;
