@@ -3,7 +3,7 @@
 let X=null,X_V_review,X_V_games,X_V_game,X_V_settings;const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const S={get:(k,d)=>{try{const v=JSON.parse(localStorage.getItem("xt_"+k));return v==null?d:v}catch(e){return d}},set:(k,v)=>localStorage.setItem("xt_"+k,JSON.stringify(v))};
 const norm=w=>String(w).toLowerCase().replace(/[’]/g,"'").replace(/[^a-z0-9'\-]/g,"");
-const toks=t=>String(t).split(/\s+/).map(norm).filter(Boolean);
+const toks=t=>String(t).split(/\s+|(?<=[A-Za-z])(?:[,;:!?…\/—–]|\.{2,}|-{2,})(?=[A-Za-z])/).map(norm).filter(Boolean);
 const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
 const short=z=>String(z).split(/[；;]/)[0].trim().slice(0,24);
@@ -67,7 +67,7 @@ function reviewBanner(){const n=dueKeys().length;return `<a class="rvb" href="#/
 let RV=null;
 function loadFor(keys,cb){X.need([...new Set(keys.map(k=>k.split(":")[0]))],cb)}
 X_V_review=function(){const due=dueKeys();if(!due.length){X.M.innerHTML=`<h2>🔁 今日复习</h2><div class="panel empty"><div class="big">🎉</div><p>今天没有需要复习的单词。</p><p class="hint">学过的单词、听写答错的单词和生词本里的单词会按 1、2、4、7、15、30 天的间隔自动安排复习。</p><a class="btn" href="#/words" style="flex:none">去学新单词</a></div>`;return}
- if(window.XTA&&XTA.block("review","#/words"))return;if(window.XTA)XTA.use("review");loadFor(due,()=>{const items=shuf(due).slice(0,30).map(k=>{const [id,i]=k.split(":"),c=X.byId(id);return c&&c.items&&c.items[+i]?{k,c,it:c.items[+i]}:null}).filter(Boolean);
+ if(window.XTA&&XTA.block("review","#/words"))return;loadFor(due,()=>{const items=shuf(due).slice(0,30).map(k=>{const [id,i]=k.split(":"),c=X.byId(id);return c&&c.items&&c.items[+i]?{k,c,it:c.items[+i]}:null}).filter(Boolean);if(!items.length){X.M.innerHTML=`<h2>🔁 今日复习</h2><div class="panel empty"><p>复习单词加载失败，本次不计入次数。请稍后重试。</p><a class="btn" href="#/words" style="flex:none">返回单词中心</a></div>`;return}if(window.XTA&&!XTA.use("review"))return;
   RV={items,pos:0,step:0,ok:0,bad:0,t0:Date.now(),wrong:false,done:[]};drawRV()})};
 function rvTimer(){const left=Math.max(0,180-Math.floor((Date.now()-RV.t0)/1000));return `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`}
 function opts(r){const others=shuf(r.c.items.filter(x=>x.w!=r.it.w)).slice(0,3).map(x=>short(x.zh));return shuf([short(r.it.zh),...others])}
@@ -85,7 +85,7 @@ function drawRV(){if(!RV)return;const left=180-(Date.now()-RV.t0)/1000;if(RV.pos
   const good=!RV.wrong;grade(r.k,good);good?RV.ok++:RV.bad++;RV.done.push({w:it.w,ok:good});setTimeout(()=>{RV.pos++;RV.step=0;RV.op=null;RV.wrong=false;drawRV()},800)})}
 function rvEnd(){clearInterval(RV.iv);const sec=Math.round((Date.now()-RV.t0)/1000),rest=dueKeys().length;
  X.M.innerHTML=`<div class="panel empty"><div class="big">🎉</div><h2>复习完成</h2><div class="stats sum"><div><b>${RV.done.length}</b>复习单词</div><div><b class="okc">${RV.ok}</b>全部答对</div><div><b class="badc">${RV.bad}</b>需加强</div><div><b>${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")}</b>用时</div></div>
- ${RV.done.filter(x=>!x.ok).length?`<p class="hint">需加强（明天会再复习）：${RV.done.filter(x=>!x.ok).map(x=>esc(x.w)).join("、")}</p>`:""}<div class="btns" style="justify-content:center">${rest?`<a class="btn" href="#/review" onclick="setTimeout(()=>dispatchEvent(new HashChangeEvent('hashchange')),0)">再复习一组（剩 ${rest}）</a>`:""}<a class="btn o" href="#/">回到首页</a></div></div>`;RV=null}
+ ${RV.done.filter(x=>!x.ok).length?`<p class="hint">需加强（明天会再复习）：${RV.done.filter(x=>!x.ok).map(x=>esc(x.w)).join("、")}</p>`:""}<div class="btns" style="justify-content:center">${rest?(window.XTA&&!XTA.paid()&&XTA.left("review")<=0?`<button class="btn" id="rvmore">👑 再复习一组（剩 ${rest}，会员无限）</button>`:`<a class="btn" href="#/review" onclick="setTimeout(()=>dispatchEvent(new HashChangeEvent('hashchange')),0)">再复习一组（剩 ${rest}）</a>`):""}<a class="btn o" href="#/">回到首页</a></div></div>`;const mb=$("#rvmore");if(mb)mb.onclick=()=>XTA.upModal("今日免费复习已用完","免费版每天可复习 1 轮，明天 0 点自动恢复；开通小团会员即可无限复习。");RV=null}
 
 // ========== 4) 小游戏 ==========
 const GAMES=[["match","单词消消乐","把英文和中文配对消除，越快越好","🧩","cv0"],["listen","听音选词","听发音，从 4 个单词里选出正确的","🎧","cv1"],["spell","快速拼写","60 秒倒计时，看中文拼出尽可能多的单词","⚡","cv2"]];
@@ -125,7 +125,7 @@ function goal(){const p=prof();return p?{5:10,10:20,20:40,30:60}[p.min]||20:20}
 function recCourse(p){const l=LV.indexOf(p.lv);const m={"日常口语":l<=1?"daily":"listen","旅游":"travel","职场":l<=1?"trade":"biz","中高考":l<=1?"pepcz":"gk","四六级":l<=2?"cet4":"cet6","考研":"ky","雅思":l<=2?"ielw":"ielo"};const id=p.lv=="零基础"&&p.goal!="中高考"?(p.goal=="旅游"?"travel":"daily"):(m[p.goal]||"daily");
  const b=X.bookOf(id);if(b){let k=b.units.findIndex((n,i)=>(S.get("prog",{})[b.id+"_"+(i+1)]||[]).length<n);if(k<0)k=0;return {title:`${b.title} · 第${k+1}单元`,href:`#/dict/${b.id}_${k+1}`}}const c=X.byId(id);return {title:c.title,href:"#/dict/"+c.id}}
 function taskCard(){const p=prof();if(!p)return `<div class="task"><div class="tkh"><b>🎯 今日任务</b><a href="#/settings">设置水平和目标 →</a></div><p class="hint" style="text-align:left;margin:0">回答 3 个小问题，为你生成每日学习计划。</p></div>`;
- const r=recCourse(p),n=dueKeys().length,g=GAMES[today()%GAMES.length],td=S.get("today",{}),done=td.d==new Date().toDateString()?td.n:0;
+ const r=recCourse(p),n=dueKeys().length,g=window.XTA&&!XTA.paid()?GAMES[0]:GAMES[today()%GAMES.length],td=S.get("today",{}),done=td.d==new Date().toDateString()?td.n:0;
  return `<div class="task"><div class="tkh"><b>🎯 今日任务</b><span class="hint">${esc(p.lv)} · ${esc(p.goal)} · 每天 ${p.min} 分钟</span><a href="#/settings">修改</a></div>
  <a class="tki" href="${r.href}"><span class="tkn">1</span><span><b>学习 ${goal()} 个新句子/单词</b><small>推荐：${esc(r.title)} · 今日已学 ${done}/${goal()}</small></span><em>${done>=goal()?"✅":"去学习"}</em></a>
  <a class="tki" href="#/review"><span class="tkn">2</span><span><b>3 分钟单词复习</b><small>${n?`有 ${n} 个单词待复习`:"暂无待复习单词"}</small></span><em>${n?"去复习":"✅"}</em></a>

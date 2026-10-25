@@ -79,13 +79,13 @@ async function sync(now){if(!sb||!user||!paid())return;clearTimeout(tmr);if(!now
 const upd=()=>{const e=$("#syncst");if(e)e.innerHTML=syncTxt()};
 Storage.prototype.setItem=function(k,v){rawSet.call(this,k,v);if(this===LS&&!mute&&typeof k=="string"&&k.startsWith("xt_")&&!SKIP.has(k)&&user&&paid())sync()};
 // ---- 会员页
-const ROWS=[["课程 / 词库单元","前 3 个单元","全部解锁","全部解锁"],["听写 + 闪卡","每天 30 题","无限","无限"],["发音","系统 / 有道发音","ElevenLabs 真人级发音","ElevenLabs 真人级发音"],["跟读评分","每天 5 次","无限","无限"],["今日复习","每天 1 轮","无限","无限"],["小游戏","单词消消乐","全部游戏","全部游戏"],["错词对比卡 · 生词本","✓","✓","✓"],["学习进度云同步","—","✓","✓"],["学习周报","—","✓","✓"],["AI 口语陪练","—","—","即将上线"],["「这句怎么说」","—","—","即将上线"],["学习计划自动调整","—","—","即将上线"]];
-function vipPage(){const t=tier();X.M.innerHTML=`<h2>👑 小团会员</h2><p style="color:var(--m)">解锁全部词库单元、真人级发音和无限练习，让每天的学习不被打断。</p>
+const ROWS=[["课程 / 词库单元","前 3 个单元","全部解锁","全部解锁"],["听写 + 闪卡","每天 30 题","无限","无限"],["发音","标准语音","句子真人级发音（部分句子）","句子真人级发音（部分句子）"],["跟读评分","每天 5 次","无限","无限"],["今日复习","每天 1 轮","无限","无限"],["小游戏","单词消消乐","全部游戏","全部游戏"],["错词对比卡 · 生词本","✓","✓","✓"],["学习进度云同步","—","✓","✓"],["学习周报","—","✓","✓"],["AI 口语陪练","—","—","即将上线"],["「这句怎么说」","—","—","即将上线"],["学习计划自动调整","—","—","即将上线"]];
+function vipPage(){const t=tier();X.M.innerHTML=`<h2>👑 小团会员</h2><p style="color:var(--m)">解锁全部词库单元、句子真人级发音（部分句子）和无限练习，让每天的学习不被打断。</p>
  ${user?`<div class="vipme">${badge(t)} <span>${t=="free"?"你当前是免费版":"有效期至 <b>"+fmtD(profile.vip_until)+"</b>"}</span></div>`:""}
  <div class="vplans"><div class="vplan"><div class="vpn">免费</div><div class="vpp">¥0</div><div class="vpd">基础练习，适合体验</div></div>
  <div class="vplan hot"><div class="vptag">推荐</div><div class="vpn">👑 小团会员</div><div class="vpp">¥18<small>/月</small></div><div class="vpd">¥128/年 · 约 ¥10.7/月</div></div>
  <div class="vplan pro"><div class="vpn">💎 小团 Pro</div><div class="vpp">¥38<small>/月</small></div><div class="vpd">¥268/年 · 含全部会员权益</div></div></div>
- <div class="vtw"><table class="vt"><thead><tr><th>权益</th><th>免费</th><th class="hc">小团会员</th><th>小团 Pro</th></tr></thead><tbody>${ROWS.map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map((v,i)=>`<td class="${i==1?"hc":""} ${v=="—"?"no":v=="✓"||v=="无限"||/解锁|全部/.test(v)?"yes":""}">${v=="即将上线"?'<span class="soon">即将上线</span>':v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+ <div class="vtw"><table class="vt"><thead><tr><th>权益</th><th>免费</th><th class="hc">小团会员</th><th>小团 Pro</th></tr></thead><tbody>${ROWS.map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map((v,i)=>`<td data-l="${["免费","小团会员","小团 Pro"][i]}" class="${i==1?"hc":""} ${v=="—"?"no":v=="✓"||v=="无限"||/解锁|全部/.test(v)?"yes":""}">${v=="即将上线"?'<span class="soon">即将上线</span>':v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
  <div class="panel vrd"><h3>🎁 兑换会员</h3>${user?"":`<p class="hint" style="text-align:left">兑换前请先 <a href="javascript:void 0" data-login style="color:var(--acc);font-weight:700">登录 / 注册</a></p>`}${redeemForm("rdm1")}
  <h3>🛒 如何购买</h3><p>目前在<strong>闲鱼</strong>搜索「小团英语」即可购买会员。拍下后卖家会发来兑换码，回到本页上方输入即可立即开通。同等级会员时长自动叠加；开通 Pro 后立即享有全部会员权益。</p>
  <p class="vnote">✅ 7 天无理由退款：开通后 7 天内如不满意，可在闲鱼申请退款。</p></div>`;bindLogin(X.M);bindRedeem(X.M)}
@@ -96,7 +96,7 @@ function report(){if(!paid())return lockPage("学习周报为会员功能","开�
  <div class="wk">${W.map(x=>`<div><i style="height:${Math.round(x.n/mx*100)}%"></i><b>${x.n}</b><span>周${x.l}</span></div>`).join("")}</div><p class="hint">${ad>=5?"本周非常坚持，继续保持 🔥":ad>=3?"不错的一周，争取每天都练一点 👍":"本周学习偏少，每天 10 分钟就能看到进步 💪"}</p></div>`}
 // ---- AI 页：Pro 占位
 function proBox(){return `<div class="probox"><div class="pbh">💎 小团 Pro 专属 · <span class="soon">即将上线</span></div><div class="pbg"><div><b>🗣️ AI 口语陪练</b><small>和 AI 老师实时英语对话，自动纠错</small></div><div><b>💡 这句怎么说</b><small>输入中文，给出地道英文表达和例句</small></div><div><b>🧭 学习计划自动调整</b><small>根据正确率与复习情况自动调节每日任务</small></div></div>${isPro()?'<p class="hint" style="margin:8px 0 0">你已是 Pro 会员，功能上线后自动开放。</p>':'<a class="btn" href="#/vip" style="flex:none;margin-top:10px">了解小团 Pro</a>'}</div>`}
-window.XTA={tier,paid,isPro,left,use,block,gate,gameLock,unitLocked,loginModal,redeemModal,upModal,FREE_UNITS,sync,
+window.XTA={LIM,tier,paid,isPro,left,use,block,gate,gameLock,unitLocked,loginModal,redeemModal,upModal,FREE_UNITS,sync,
  init(api){X=api;X.V.vip=vipPage;X.V.report=report;const ai=X.V.ai;X.V.ai=()=>{ai();X.M.querySelector(".panel").insertAdjacentHTML("afterbegin",proBox())};
   drawAcct();if(!sb)return;
   const apply=async s=>{const nu=s&&s.user||null,ch=(nu&&nu.id)!=(user&&user.id);user=nu;if(ch){sync.pulled=false;syncAt=0}await loadProfile();drawAcct();if(ch)dispatchEvent(new HashChangeEvent("hashchange"));if(user&&paid())sync(true)};
