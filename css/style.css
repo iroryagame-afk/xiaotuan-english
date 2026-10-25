@@ -193,3 +193,24 @@ html,body{overflow-x:hidden;max-width:100%}.msearch{display:none}
 .wk{display:flex;gap:8px;align-items:flex-end;height:170px;margin:20px 0 8px}.wk div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:12px;color:var(--m)}.wk i{display:block;width:100%;max-width:36px;min-height:4px;background:var(--acc);border-radius:6px 6px 2px 2px}.wk b{color:var(--t);margin:4px 0 2px}
 @media(max-width:900px){.vplans{grid-template-columns:1fr;gap:14px}.vplan{display:grid;grid-template-columns:1fr auto;text-align:left;align-items:center;padding:14px 16px}.vpd{grid-column:1/-1}.vpp{margin:0}.pbg{grid-template-columns:1fr}.vt{font-size:13px;min-width:0}.vt th,.vt td{padding:9px 6px}#avmenu{width:auto}}
 @media(max-width:380px){.rdm{flex-direction:column}.rdm .btn{padding:12px}}
+
+/* ---- 每日一句 ---- */
+.dq{background:var(--card);border:var(--bw) solid var(--bd);border-radius:calc(var(--r) + 4px);padding:22px 24px;margin:0 0 24px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.dq:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--acc)}
+.dqhd{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:12px}
+.dqbadge{font-weight:800;color:var(--acc);font-size:14px}
+.dqdate{color:var(--m);font-size:12.5px}
+.dqtag{display:inline-block;background:var(--acct);color:var(--acc);border-radius:99px;padding:3px 10px;font-size:12.5px;font-weight:var(--fw)}
+.dqen{margin:0;font-size:22px;font-weight:800;line-height:1.45;font-family:Georgia,"Times New Roman",serif;color:var(--t)}
+.dqzh{margin:10px 0 0;font-size:17px;font-weight:700;color:var(--t);line-height:1.5}
+.dqacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.dqacts .btn{flex:none;padding:8px 12px;font-size:13.5px;min-height:40px}
+.dq-page{max-width:720px}
+.dqmore{margin-top:28px;max-width:720px}
+.dqsharebox{max-width:min(420px,96vw)}
+.dqprev{background:var(--soft);border-radius:var(--rs);padding:10px;text-align:center}
+.dqprev img{width:100%;max-width:280px;border-radius:12px;box-shadow:0 8px 24px #0002}
+[data-theme=duolingo] .dq{border-bottom-width:4px}
+[data-theme=tech] .dq:before{box-shadow:0 0 12px var(--acc)}
+@media(max-width:900px){.dq{padding:18px 16px;margin-bottom:20px}.dqen{font-size:19px}.dqzh{font-size:15.5px}.dqacts .btn{padding:8px 10px;font-size:13px}}
+@media(max-width:480px){.goal{display:none}.dqacts{gap:6px}}
