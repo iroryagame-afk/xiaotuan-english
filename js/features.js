@@ -67,7 +67,7 @@ function reviewBanner(){const n=dueKeys().length;return `<a class="rvb" href="#/
 let RV=null;
 function loadFor(keys,cb){X.need([...new Set(keys.map(k=>k.split(":")[0]))],cb)}
 X_V_review=function(){const due=dueKeys();if(!due.length){X.M.innerHTML=`<h2>🔁 今日复习</h2><div class="panel empty"><div class="big">🎉</div><p>今天没有需要复习的单词。</p><p class="hint">学过的单词、听写答错的单词和生词本里的单词会按 1、2、4、7、15、30 天的间隔自动安排复习。</p><a class="btn" href="#/words" style="flex:none">去学新单词</a></div>`;return}
- loadFor(due,()=>{const items=shuf(due).slice(0,30).map(k=>{const [id,i]=k.split(":"),c=X.byId(id);return c&&c.items&&c.items[+i]?{k,c,it:c.items[+i]}:null}).filter(Boolean);
+ if(window.XTA&&XTA.block("review","#/words"))return;if(window.XTA)XTA.use("review");loadFor(due,()=>{const items=shuf(due).slice(0,30).map(k=>{const [id,i]=k.split(":"),c=X.byId(id);return c&&c.items&&c.items[+i]?{k,c,it:c.items[+i]}:null}).filter(Boolean);
   RV={items,pos:0,step:0,ok:0,bad:0,t0:Date.now(),wrong:false,done:[]};drawRV()})};
 function rvTimer(){const left=Math.max(0,180-Math.floor((Date.now()-RV.t0)/1000));return `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`}
 function opts(r){const others=shuf(r.c.items.filter(x=>x.w!=r.it.w)).slice(0,3).map(x=>short(x.zh));return shuf([short(r.it.zh),...others])}
@@ -95,9 +95,9 @@ function getWords(src,cb){if(src=="vocab"){const ks=S.get("vocab",[]).filter(k=>
 const best=g=>S.get("best",{})[g];
 function setBest(g,v,lower){const B=S.get("best",{});const o=B[g];const nb=o==null||(lower?v<o:v>o);if(nb){B[g]=v;S.set("best",B)}return nb}
 const fmtBest=(g)=>{const b=best(g);return b==null?"暂无记录":g=="match"?`最佳 ${b} 秒`:`最佳 ${b} 分`};
-X_V_games=function(){X.M.innerHTML=`<h2>🎮 小游戏</h2><p style="color:var(--m)">用游戏巩固单词。可以选择任意单词课程、词库或你的生词本作为题库。</p><div class="gwall">${GAMES.map(([id,n,d,ic,cv])=>`<a class="gcard" href="#/game/${id}"><div class="gcov ${cv}"><span>${ic}</span></div><div class="gb"><b>${n}</b><small>${d}</small><em>${fmtBest(id)}</em></div></a>`).join("")}</div>`};
+X_V_games=function(){X.M.innerHTML=`<h2>🎮 小游戏</h2><p style="color:var(--m)">用游戏巩固单词。可以选择任意单词课程、词库或你的生词本作为题库。</p><div class="gwall">${GAMES.map(([id,n,d,ic,cv])=>`<a class="gcard" href="#/game/${id}"><div class="gcov ${cv}"><span>${ic}</span></div><div class="gb"><b>${n}</b><small>${d}</small><em>${id!="match"&&window.XTA&&!XTA.paid()?"🔒 会员专享":fmtBest(id)}</em></div></a>`).join("")}</div>`};
 let GT=null;
-X_V_game=function(id){const g=GAMES.find(x=>x[0]==id);if(!g)return X_V_games();clearInterval(GT);const src=S.get("gsrc","c:primary");
+X_V_game=function(id){const g=GAMES.find(x=>x[0]==id);if(!g)return X_V_games();if(id!="match"&&window.XTA&&XTA.gameLock(g[1]))return;clearInterval(GT);const src=S.get("gsrc","c:primary");
  X.M.innerHTML=`<div class="panel"><div class="ptop"><div class="crumb dh"><a class="back" href="#/games">← 返回</a><b>${g[1]}</b><span>${fmtBest(id)}</span></div></div><p class="hint" style="text-align:left">${g[2]}</p><label class="hint" style="text-align:left;display:block;margin:16px 0 6px">题库</label><select id="gs" class="search">${srcOpts().map(([k,n])=>`<option value="${k}" ${k==src?"selected":""}>${esc(n)}</option>`).join("")}</select><button class="btn" id="gstart" style="flex:none;padding:12px 32px">开始游戏</button><div id="garea"></div></div>`;
  $("#gstart").onclick=()=>{const s=$("#gs").value;S.set("gsrc",s);getWords(s,ws=>{ws=ws.filter(w=>w&&w.w&&w.zh);if(ws.length<4)return X.toast("题库单词太少（至少 4 个），请换一个题库");$("#gstart").textContent="重新开始";({match:gMatch,listen:gListen,spell:gSpell})[id](ws)})}};
 function gOver(id,v,lower,txt){clearInterval(GT);const nb=setBest(id,v,lower);$("#garea").innerHTML=`<div class="gover"><div class="big">${nb?"🏆":"👏"}</div><h3>${txt}</h3><p class="hint">${nb?"新纪录！":"历史"+fmtBest(id)}</p></div>`}
