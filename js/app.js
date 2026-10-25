@@ -13,20 +13,25 @@ function need(ids,cb){ids=[...new Set(ids)].filter(i=>byId(i)&&!isLoaded(i));if(
 ids.forEach(i=>{const t=document.createElement("script");t.src="data/"+i+".js";t.onload=()=>{--left||done()};t.onerror=()=>{fail++;--left||done()};document.body.appendChild(t)});function done(){fail?M.innerHTML='<p class="hint" style="margin-top:60px">词库文件加载失败，请确认 data 文件夹完整后刷新页面。</p>':cb()}}
 const cntOf=c=>c.items?c.items.length:c.n;
 function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1600)}
-// ---- 发音：默认有道真人发音（美音 type=2 / 英音 type=1），失败或 3 秒未开始时回退到系统语音
+// ---- 发音：句子优先本地真人级录音，单词用有道真人发音；失败或 3 秒未开始时依次回退（有道 → 系统语音）
 const VOICE_PREF=["Samantha","Ava","Allison","Google US English","Microsoft Aria","Jenny","Natural","Enhanced","Premium"];
 let voice=null;function pickVoice(){if(!("speechSynthesis" in window))return;const v=speechSynthesis.getVoices(),us=v.filter(x=>/en[-_]US/i.test(x.lang)),en=v.filter(x=>/^en/i.test(x.lang));const score=x=>{let s=0;VOICE_PREF.forEach((p,k)=>{if(x.name.includes(p))s=Math.max(s,100-k)});if(/Natural|Enhanced|Premium/i.test(x.name))s+=50;return s};voice=[...us].sort((a,b)=>score(b)-score(a))[0]||en[0]||null}
 if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
 const xa=document.createElement("audio");xa.id="xa";xa.preload="auto";document.body.appendChild(xa);let sayTok=0;
 function tts(t,rate){if(!("speechSynthesis" in window))return toast("当前浏览器不支持语音朗读，请使用 Chrome / Edge / Safari");speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=rate&&rate<1?0.7:0.92;if(voice)u.voice=voice;speechSynthesis.speak(u)}
 function sayHint(t,rate){let h=$("#sayhint");if(!h){h=document.createElement("button");h.id="sayhint";h.className="sayhint";document.body.appendChild(h)}h.textContent="🔊 点击朗读";h.onclick=()=>{h.classList.remove("show");speak(t,rate)};h.classList.add("show");clearTimeout(h._t);h._t=setTimeout(()=>h.classList.remove("show"),6000)}
-function speak(t,rate,auto){const tok=++sayTok,mode=S.get("voice","us");xa.pause();if("speechSynthesis" in window)speechSynthesis.cancel();const hh=$("#sayhint");if(hh)hh.classList.remove("show");
+// 发音模式：f=美音女声（默认，本地真人级录音）/ m=美音男声 / uk=英音（有道）/ sys=系统语音；句子优先本地 audio/，单词用有道
+function vmode(){let v=S.get("voice","f");if(v=="us"){v="f";S.set("voice",v)}return v}
+function speak(t,rate,auto){const tok=++sayTok,mode=vmode();xa.pause();if("speechSynthesis" in window)speechSynthesis.cancel();const hh=$("#sayhint");if(hh)hh.classList.remove("show");
 if(mode=="sys")return tts(t,rate);
-let started=false;const fb=()=>{if(tok!=sayTok||started)return;started=true;xa.pause();tts(t,rate)};
-xa.src=`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(t)}&type=${mode=="uk"?1:2}`;xa.playbackRate=rate&&rate<1?0.75:1;xa.defaultPlaybackRate=xa.playbackRate;
-xa.onplaying=()=>{if(tok==sayTok)started=true};xa.onerror=()=>fb();
-const timer=setTimeout(fb,3000);xa.onplaying=()=>{if(tok==sayTok){started=true;clearTimeout(timer)}};
+const sent=/\s/.test(t.trim()),A=window.AUDIO_H||{},e=A[t],urls=[];
+if(sent&&(mode=="f"||mode=="m")&&e){const v=(e[1]&(mode=="f"?1:2))?mode:(e[1]&1?"f":e[1]&2?"m":"");if(v)urls.push(`audio/${v}/${e[0]}.mp3`)}
+urls.push(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(t)}&type=${mode=="uk"?1:2}`);
+let k=0,started=false,timer=0;const rt=rate&&rate<1?0.75:1;
+const fb=()=>{if(tok!=sayTok||started)return;clearTimeout(timer);if(++k<urls.length)return tryUrl();started=true;xa.pause();tts(t,rate)};
+function tryUrl(){if(tok!=sayTok)return;xa.src=urls[k];xa.playbackRate=rt;xa.defaultPlaybackRate=rt;xa.onerror=()=>fb();timer=setTimeout(fb,3000);xa.onplaying=()=>{if(tok==sayTok){started=true;clearTimeout(timer)}};
 const p=xa.play();if(p&&p.catch)p.catch(e=>{if(tok!=sayTok)return;if(e&&e.name=="NotAllowedError"){clearTimeout(timer);started=true;sayHint(t,rate)}else fb()})}
+tryUrl()}
 // ---- progress / lists
 const prog=id=>S.get("prog",{})[id]||[];
 function markDone(id,i){const td=new Date().toDateString(),dl=S.get("days",[]);if(!dl.includes(td))S.set("days",[...dl,td].slice(-400));const t=S.get("today",{d:td,n:0});S.set("today",t.d==td?{d:td,n:t.n+1}:{d:td,n:1});const p=S.get("prog",{});p[id]=[...new Set([...(p[id]||[]),i])];S.set("prog",p);S.set("last",{...S.get("last",{}),[id]:i})}
@@ -175,8 +180,8 @@ V.feedback=()=>{const L=S.get("feedback",[]);M.innerHTML=`<h2>💌 意见反馈<
 <div id="fbok"></div>${L.length?`<h3>已提交的反馈（${L.length}）</h3><div class="list">${L.slice().reverse().map(f=>`<div class="row"><div><span class="tag">${esc(f.t)}</span>${esc(f.c)}<div class="x">${new Date(f.at).toLocaleString("zh-CN")}</div></div></div>`).join("")}</div>`:""}
 <p class="hint" style="text-align:left;margin-top:16px">说明：反馈目前仅保存在你的浏览器本地，不会上传到服务器。</p></div>`;
 $("#fb").onsubmit=e=>{e.preventDefault();const c=$("#fbc").value.trim();if(!c)return toast("请填写反馈内容");S.set("feedback",[...S.get("feedback",[]),{t:$("#fbt").value,c,m:$("#fbm").value.trim(),at:Date.now()}]);V.feedback();$("#fbok").innerHTML='<div class="okbox">🎉 感谢你的反馈！我们会认真阅读每一条建议。</div>'}};
-// ---- 发音设置（美音 / 英音 / 系统语音）
-function drawVsel(){document.querySelectorAll(".vsel").forEach(el=>{el.innerHTML=[["us","美音"],["uk","英音"],["sys","系统语音"]].map(([k,n])=>`<button data-v="${k}" class="${S.get("voice","us")==k?"on":""}">${n}</button>`).join("");el.querySelectorAll("[data-v]").forEach(b=>b.onclick=e=>{e.stopPropagation();S.set("voice",b.dataset.v);drawVsel();toast("发音已切换为「"+b.textContent+"」");speak("Hello, nice to meet you.")})})}
+// ---- 发音设置（美音女声 / 美音男声 / 英音 / 系统语音）
+function drawVsel(){document.querySelectorAll(".vsel").forEach(el=>{el.innerHTML=[["f","美音女声"],["m","美音男声"],["uk","英音"],["sys","系统语音"]].map(([k,n])=>`<button data-v="${k}" class="${vmode()==k?"on":""}">${n}</button>`).join("");el.querySelectorAll("[data-v]").forEach(b=>b.onclick=e=>{e.stopPropagation();S.set("voice",b.dataset.v);drawVsel();toast("发音已切换为「"+b.textContent+"」");speak("Hello, nice to meet you.")})})}
 // ---- 通知 / 头像菜单
 const NOTES=["👋 欢迎使用小团英语，点击右上角头像可查看生词本、收藏和历史记录","📚 新增词库：成人自考英语词汇、全国英语等级考试三级（PETS-3）","🎨 支持 4 种主题风格，点击 🎨 即可切换"];
 $("#bellmenu").innerHTML=`<div class="thttl">通知</div>`+NOTES.map(n=>`<div class="note">${n}</div>`).join("");
@@ -195,7 +200,7 @@ const GUIDE=`<h2>📘 使用指南</h2><div class="panel" style="max-width:none;
 <h3>📚 课程与词库</h3><p>左侧分类树可按阶段筛选（手机上点左上角 ☰ 打开）。词库按每单元约 50 词拆分，点进去选择单元即可练习。</p>
 <h3>🤖 AI助手 与 💌 意见反馈</h3><p>AI助手提供可一键复制的提示词模板（口语陪练、作文批改、语法讲解）和 AI 学习资源；意见反馈可提交建议，内容保存在本机。</p>
 <h3>👤 我的</h3><p>学习进度、生词本、收藏和历史记录都保存在当前浏览器中（无需注册）。更换浏览器或清除浏览器数据会丢失记录。</p>
-<h3>💡 小贴士</h3><ul><li>发音默认使用<b>有道真人发音（美音）</b>，可在右上角头像菜单或手机“更多”里切换 美音 / 英音 / 系统语音；网络不佳时会自动改用系统语音</li><li>iPhone / iPad 首次进入题目时可能无法自动播放，点屏幕下方的“🔊 点击朗读”或“朗读”按钮即可</li><li>“🐢 慢速”会以 0.75 倍速播放</li><li>右上角 🎨 可切换 4 种主题风格（多邻国风 / 极简高级风 / 清新温暖风 / 深色科技风）</li><li>每天 15–20 分钟、坚持听写比一次学很久更有效</li></ul></div>`;
+<h3>💡 小贴士</h3><ul><li>句子默认使用<b>真人级发音（美音女声）</b>，可在右上角头像菜单或手机“更多”里切换 <b>美音女声 / 美音男声 / 英音 / 系统语音</b>；单词使用有道真人发音（美音或英音）；音频加载失败时会自动改用有道发音或系统语音</li><li>iPhone / iPad 首次进入题目时可能无法自动播放，点屏幕下方的“🔊 点击朗读”或“朗读”按钮即可</li><li>“🐢 慢速”会以 0.75 倍速播放</li><li>右上角 🎨 可切换 4 种主题风格（多邻国风 / 极简高级风 / 清新温暖风 / 深色科技风）</li><li>每天 15–20 分钟、坚持听写比一次学很久更有效</li></ul></div>`;
 V.guide=()=>{M.innerHTML=GUIDE+FOOT};
 if(!S.get("seen",false)){setTimeout(()=>{const d=document.createElement("div");d.className="tip";d.innerHTML=`<div class="tipbox"><h3>👋 欢迎来到小团英语</h3><p>1. 在左侧分类或首页选择一门课程<br>2. 点“开始学习”进入<b>听写练习</b>：看中文、听英文、逐词输入<br>3. 单词课程还可以用<b>闪卡</b>和<b>拼写测验</b>；句子课程可以<b>跟读</b>打分<br>4. 快捷键：空格=下一个词，Enter=提交，Ctrl=朗读</p><div class="btns"><a class="btn o" href="#/guide" id="tg">查看完整使用指南</a><button class="btn" id="tk">我知道了</button></div></div>`;document.body.appendChild(d);const close=()=>{d.remove();S.set("seen",true)};d.querySelector("#tk").onclick=close;d.querySelector("#tg").onclick=close},400)}
 // ---- 移动端：搜索按钮 / PWA
