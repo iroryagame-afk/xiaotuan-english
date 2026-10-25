@@ -1,0 +1,1 @@
+(window.YT_DATA=window.YT_DATA||{})["bec_56"]=[{"w":"negative","en":"negative","ph":"/'nɛɡətɪv/","zh":"[数] 负的；消极的；否定的；阴性的；否定；负数；[摄] 底片；否定；拒绝","ex":""},{"w":"clientele","en":"clientele","ph":"/'klaɪən'tɛl/","zh":"客户；诉讼委托人","ex":""},{"w":"disappear","en":"disappear","ph":"/'dɪsə'pɪr/","zh":"消失；失踪；不复存在","ex":""}];

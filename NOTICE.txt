@@ -1,0 +1,7 @@
+小团英语 · 数据来源说明
+数据来源说明
+
+data/*.js 与 js/imported.js 中的词库数据转换自 Qwerty Learner (https://github.com/RealKai42/qwerty-learner, public/dicts)，原项目采用 GNU GPL-3.0 协议。
+转换方式：去重、合并释义、按每单元50条拆分。
+everyone-can-use-english (ZuodaoTech, GPL-3.0) 仓库中没有可直接使用的结构化词表/句子数据，因此未导入。
+其余课程内容为小团英语原创。
